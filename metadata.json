@@ -1,0 +1,6 @@
+{
+  "name": "BTC Derivatives Unified Desk",
+  "description": "비트코인 30일 과거 가격, 만기별 옵션 IV 기대 변동성, OI 기반 Max Pain, 가격별 청산 물량을 단일 가격 좌표계에 통합 시각화하는 퀀트 분석 대시보드",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
