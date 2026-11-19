@@ -4,7 +4,9 @@ import { TopBar, type DashboardPageId } from './components/TopBar';
 import { UnifiedDerivativesChart } from './components/UnifiedDerivativesChart';
 import { AnalyticsDetailsPanel } from './components/AnalyticsDetailsPanel';
 import { LongTermDashboardPage } from './components/longTerm/LongTermDashboardPage';
+import { SignalAnalysisPage } from './components/signalAnalysis/SignalAnalysisPage';
 import { useDerivativesMarketData, useLongTermMarketData } from './hooks/useMarketData';
+import { useSignalAnalysis } from './hooks/useSignalAnalysis';
 import type { LayerVisibility } from './types/derivatives';
 import {
   calculateExpectedVolatilityMoves,
@@ -24,6 +26,7 @@ export default function App() {
 
   const derivativesState = useDerivativesMarketData(activePage === 'derivatives');
   const longTermState = useLongTermMarketData(activePage === 'long_term');
+  const signalState = useSignalAnalysis(activePage === 'signal_analysis');
 
   const snapshot = derivativesState.data;
 
@@ -161,7 +164,7 @@ export default function App() {
             </>
           )}
         </main>
-      ) : (
+      ) : activePage === 'long_term' ? (
         <main className="flex-1 flex flex-col">
           {longTermState.loading && !longTermState.data ? (
             <div className="flex-1 flex flex-col items-center justify-center px-5 py-24 text-center space-y-3">
@@ -218,6 +221,22 @@ export default function App() {
               />
             </>
           )}
+        </main>
+      ) : (
+        <main className="flex-1 flex flex-col">
+          <SignalAnalysisPage
+            status={signalState.status}
+            analysis={signalState.analysis}
+            selectedMatchDetail={signalState.selectedMatchDetail}
+            selectedMatchRank={signalState.selectedMatchRank}
+            loadingStatus={signalState.loadingStatus}
+            runningAnalysis={signalState.runningAnalysis}
+            loadingMatchDetail={signalState.loadingMatchDetail}
+            error={signalState.error}
+            onTriggerSync={signalState.triggerSync}
+            onRunAnalysis={signalState.run}
+            onSelectMatch={signalState.selectMatch}
+          />
         </main>
       )}
     </div>

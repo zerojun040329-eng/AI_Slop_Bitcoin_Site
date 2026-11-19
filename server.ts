@@ -1,6 +1,8 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { MarketDataService } from './server/services/marketDataService.ts';
+import { AnalysisController } from './src/quant/analysisController.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -355,6 +357,18 @@ async function getMempoolFees24h() {
 
 async function createServer() {
   const app = express();
+  app.use(express.json({ limit: '1mb' }));
+
+  const marketDataService = new MarketDataService();
+  const analysisController = new AnalysisController();
+  marketDataService.onSeriesChanged(() => {
+    analysisController.invalidate();
+  });
+
+  // Trigger non-blocking incremental sync on startup if cached binary exists
+  if (marketDataService.getStatus().storedBars > 0) {
+    void marketDataService.syncData(false);
+  }
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true, timestamp: new Date().toISOString() });
@@ -535,6 +549,71 @@ async function createServer() {
         message,
         timestamp: new Date().toISOString(),
       });
+    }
+  });
+
+  // 4. BTC 5m Technical Signal Similarity & Forward Return Statistical Analysis
+  app.get('/api/signal-analysis/status', (_req, res) => {
+    res.json(marketDataService.getStatus());
+  });
+
+  app.post('/api/signal-analysis/sync', (req, res) => {
+    const forceFull = Boolean(req.body?.forceFullBackfill);
+    void marketDataService.syncData(forceFull);
+    res.status(202).json(marketDataService.getStatus());
+  });
+
+  app.post('/api/signal-analysis/run', (req, res) => {
+    const status = marketDataService.getStatus();
+    if (!status.hasSufficientData) {
+      res.status(409).json({
+        error: 'INSUFFICIENT_DATA',
+        message:
+          status.lastError ??
+          `4년 5분봉 데이터 수집이 완료되지 않았습니다 (${status.storedBars.toLocaleString()} / ${status.targetMinBars.toLocaleString()}봉). 동기화 완료 후 실행해 주세요.`,
+        status,
+      });
+      return;
+    }
+
+    try {
+      const result = analysisController.runAnalysis(marketDataService.getSeries(), req.body ?? {});
+      res.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '유사 구간 분석 실행 오류';
+      res.status(400).json({ error: 'ANALYSIS_ERROR', message });
+    }
+  });
+
+  app.get('/api/signal-analysis/match-detail', (req, res) => {
+    const status = marketDataService.getStatus();
+    if (!status.hasSufficientData) {
+      res.status(409).json({
+        error: 'INSUFFICIENT_DATA',
+        message: '데이터가 아직 준비되지 않았습니다.',
+      });
+      return;
+    }
+
+    const index = Number(req.query.index);
+    const mDist = Number(req.query.mDist ?? 0);
+    const eDist = Number(req.query.eDist ?? 0);
+    if (!Number.isInteger(index) || index < 0) {
+      res.status(400).json({ error: 'INVALID_INDEX', message: '유효하지 않은 봉 인덱스입니다.' });
+      return;
+    }
+
+    try {
+      const detail = analysisController.getMatchDetail(
+        marketDataService.getSeries(),
+        index,
+        Number.isFinite(mDist) ? mDist : 0,
+        Number.isFinite(eDist) ? eDist : 0,
+      );
+      res.json(detail);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '매치 상세 조회 오류';
+      res.status(400).json({ error: 'MATCH_DETAIL_ERROR', message });
     }
   });
 
