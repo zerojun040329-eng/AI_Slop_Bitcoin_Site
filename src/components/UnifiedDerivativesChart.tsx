@@ -211,12 +211,14 @@ export const UnifiedDerivativesChart: React.FC<UnifiedDerivativesChartProps> = (
     });
   }, []);
 
-  // Mouse wheel zoom centered on cursor
-  const handleWheel = useCallback(
-    (e: React.WheelEvent<SVGSVGElement>) => {
+  // Native non-passive mouse wheel zoom centered on cursor so page scroll is prevented
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const svg = svgRef.current;
-      if (!svg) return;
+      e.stopPropagation();
       const rect = svg.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
@@ -257,9 +259,13 @@ export const UnifiedDerivativesChart: React.FC<UnifiedDerivativesChartProps> = (
           panY: nextAnchorY - yAnchorBase,
         };
       });
-    },
-    [xAnchorBase, yAnchorBase],
-  );
+    };
+
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      svg.removeEventListener('wheel', onWheel);
+    };
+  }, [xAnchorBase, yAnchorBase]);
 
   // Pointer drag pan
   const handlePointerDown = useCallback(
@@ -813,14 +819,13 @@ export const UnifiedDerivativesChart: React.FC<UnifiedDerivativesChartProps> = (
           ref={svgRef}
           width={size.width}
           height={size.height}
-          onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           onPointerLeave={handlePointerLeave}
           onDoubleClick={handleResetView}
-          className={`block w-full h-full ${isDragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
+          className={`block w-full h-full overscroll-contain ${isDragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
         >
           <defs>
             <clipPath id="unified-plot-clip">

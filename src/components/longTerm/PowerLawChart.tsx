@@ -172,39 +172,48 @@ export const PowerLawChart: React.FC<PowerLawChartProps> = ({
     [plotBottom, view.panY, plotH, view.zoomY, scaleMode, linearMinY, linearMaxY, logMinY, logMaxY],
   );
 
-  // Wheel Zoom centered on pointer
-  const handleWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
-    e.preventDefault();
+  // Native non-passive wheel zoom centered on pointer so page scroll is prevented
+  useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
-    const rect = svg.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const factor = e.deltaY < 0 ? 1.14 : 0.88;
 
-    setView((prev) => {
-      if (e.shiftKey) {
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = svg.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const factor = e.deltaY < 0 ? 1.14 : 0.88;
+
+      setView((prev) => {
+        if (e.shiftKey) {
+          const nextZoomX = Math.min(12, Math.max(0.8, prev.zoomX * factor));
+          const ratioX = nextZoomX / prev.zoomX;
+          const nextPanX = mx - plotLeft - (mx - plotLeft - prev.panX) * ratioX;
+          return { ...prev, zoomX: nextZoomX, panX: nextPanX };
+        }
+
         const nextZoomX = Math.min(12, Math.max(0.8, prev.zoomX * factor));
+        const nextZoomY = Math.min(12, Math.max(0.8, prev.zoomY * factor));
         const ratioX = nextZoomX / prev.zoomX;
+        const ratioY = nextZoomY / prev.zoomY;
+
         const nextPanX = mx - plotLeft - (mx - plotLeft - prev.panX) * ratioX;
-        return { ...prev, zoomX: nextZoomX, panX: nextPanX };
-      }
+        const nextPanY = my - plotBottom - (my - plotBottom - prev.panY) * ratioY;
 
-      const nextZoomX = Math.min(12, Math.max(0.8, prev.zoomX * factor));
-      const nextZoomY = Math.min(12, Math.max(0.8, prev.zoomY * factor));
-      const ratioX = nextZoomX / prev.zoomX;
-      const ratioY = nextZoomY / prev.zoomY;
+        return {
+          zoomX: nextZoomX,
+          zoomY: nextZoomY,
+          panX: nextPanX,
+          panY: nextPanY,
+        };
+      });
+    };
 
-      const nextPanX = mx - plotLeft - (mx - plotLeft - prev.panX) * ratioX;
-      const nextPanY = my - plotBottom - (my - plotBottom - prev.panY) * ratioY;
-
-      return {
-        zoomX: nextZoomX,
-        zoomY: nextZoomY,
-        panX: nextPanX,
-        panY: nextPanY,
-      };
-    });
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      svg.removeEventListener('wheel', onWheel);
+    };
   }, [plotLeft, plotBottom]);
 
   const handlePointerDown = useCallback(
@@ -698,14 +707,13 @@ export const PowerLawChart: React.FC<PowerLawChartProps> = ({
           ref={svgRef}
           width={size.width}
           height={size.height}
-          onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           onPointerLeave={handlePointerLeave}
           onDoubleClick={handleResetView}
-          className={`block w-full h-full ${isDragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
+          className={`block w-full h-full overscroll-contain ${isDragging ? 'cursor-grabbing' : 'cursor-crosshair'}`}
         >
           <defs>
             <clipPath id="powerlaw-plot-clip">

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type DashboardPageId = 'derivatives' | 'long_term' | 'signal_analysis';
+export type DashboardPageId = 'derivatives' | 'long_term' | 'signal_analysis' | 'strategy_backtest';
 
 interface TopBarProps {
   activePage: DashboardPageId;
@@ -79,6 +79,21 @@ export const TopBar: React.FC<TopBarProps> = ({ activePage, onSelectPage }) => {
           시그널 유사도
         </button>
 
+        <button
+          type="button"
+          onClick={() => {
+            onSelectPage('strategy_backtest');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          className={`py-1 border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            activePage === 'strategy_backtest'
+              ? 'border-sky-400 text-slate-50 font-semibold'
+              : 'border-transparent text-slate-400 hover:text-slate-100'
+          }`}
+        >
+          단기 전략 테스트
+        </button>
+
         <span className="hidden lg:inline-block h-3.5 w-px bg-slate-800 shrink-0" aria-hidden="true" />
 
         {activePage === 'derivatives' ? (
@@ -129,7 +144,7 @@ export const TopBar: React.FC<TopBarProps> = ({ activePage, onSelectPage }) => {
               채굴 경제성
             </button>
           </>
-        ) : (
+        ) : activePage === 'signal_analysis' ? (
           <>
             <button
               type="button"
@@ -158,6 +173,44 @@ export const TopBar: React.FC<TopBarProps> = ({ activePage, onSelectPage }) => {
               className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               독립성·Ablation
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => scrollTo('strategy-settings')}
+              className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              전략 설정
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollTo('strategy-performance')}
+              className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              성과 요약
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollTo('strategy-equity-drawdown')}
+              className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              자산·MDD
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollTo('strategy-breakdowns')}
+              className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              월별·체제
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollTo('strategy-trades')}
+              className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              거래 내역
             </button>
           </>
         )}

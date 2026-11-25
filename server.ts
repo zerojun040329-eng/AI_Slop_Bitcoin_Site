@@ -3,6 +3,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { MarketDataService } from './server/services/marketDataService.ts';
 import { AnalysisController } from './src/quant/analysisController.ts';
+import { listRegisteredStrategies } from './src/strategyEngine/strategies/registry.ts';
+import {
+  executeStrategyBacktest,
+  extractTradeCandleWindow,
+} from './src/strategyEngine/backtestController.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -614,6 +619,58 @@ async function createServer() {
     } catch (err) {
       const message = err instanceof Error ? err.message : '매치 상세 조회 오류';
       res.status(400).json({ error: 'MATCH_DETAIL_ERROR', message });
+    }
+  });
+
+  // 5. Short-Term Strategy Backtesting Engine (reuses raw 5m OHLCV cache only)
+  app.get('/api/strategy-backtest/strategies', (_req, res) => {
+    res.json({ strategies: listRegisteredStrategies() });
+  });
+
+  app.post('/api/strategy-backtest/run', (req, res) => {
+    const status = marketDataService.getStatus();
+    if (!status.hasSufficientData) {
+      res.status(409).json({
+        error: 'INSUFFICIENT_DATA',
+        message:
+          status.lastError ??
+          `4년 5분봉 데이터 수집이 완료되지 않았습니다 (${status.storedBars.toLocaleString()} / ${status.targetMinBars.toLocaleString()}봉). 동기화 완료 후 실행해 주세요.`,
+        status,
+      });
+      return;
+    }
+
+    try {
+      const result = executeStrategyBacktest(marketDataService.getSeries(), req.body ?? {});
+      res.json(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '전략 백테스트 실행 오류';
+      res.status(400).json({ error: 'BACKTEST_ERROR', message });
+    }
+  });
+
+  app.post('/api/strategy-backtest/trade-window', (req, res) => {
+    const status = marketDataService.getStatus();
+    if (!status.hasSufficientData) {
+      res.status(409).json({
+        error: 'INSUFFICIENT_DATA',
+        message: '데이터가 아직 준비되지 않았습니다.',
+      });
+      return;
+    }
+
+    const trade = req.body?.trade;
+    if (!trade || !Number.isInteger(trade.entryIndex) || !Number.isInteger(trade.exitIndex)) {
+      res.status(400).json({ error: 'INVALID_TRADE', message: '유효하지 않은 거래 정보입니다.' });
+      return;
+    }
+
+    try {
+      const detail = extractTradeCandleWindow(marketDataService.getSeries(), trade);
+      res.json(detail);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '거래 캔들 윈도우 조회 오류';
+      res.status(400).json({ error: 'TRADE_WINDOW_ERROR', message });
     }
   });
 

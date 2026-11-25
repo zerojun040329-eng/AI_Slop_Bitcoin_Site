@@ -5,8 +5,10 @@ import { UnifiedDerivativesChart } from './components/UnifiedDerivativesChart';
 import { AnalyticsDetailsPanel } from './components/AnalyticsDetailsPanel';
 import { LongTermDashboardPage } from './components/longTerm/LongTermDashboardPage';
 import { SignalAnalysisPage } from './components/signalAnalysis/SignalAnalysisPage';
+import { StrategyDashboard } from './components/strategyBacktest/StrategyDashboard';
 import { useDerivativesMarketData, useLongTermMarketData } from './hooks/useMarketData';
 import { useSignalAnalysis } from './hooks/useSignalAnalysis';
+import { useStrategyBacktest } from './hooks/useStrategyBacktest';
 import type { LayerVisibility } from './types/derivatives';
 import {
   calculateExpectedVolatilityMoves,
@@ -27,6 +29,7 @@ export default function App() {
   const derivativesState = useDerivativesMarketData(activePage === 'derivatives');
   const longTermState = useLongTermMarketData(activePage === 'long_term');
   const signalState = useSignalAnalysis(activePage === 'signal_analysis');
+  const strategyState = useStrategyBacktest(activePage === 'strategy_backtest');
 
   const snapshot = derivativesState.data;
 
@@ -222,7 +225,7 @@ export default function App() {
             </>
           )}
         </main>
-      ) : (
+      ) : activePage === 'signal_analysis' ? (
         <main className="flex-1 flex flex-col">
           <SignalAnalysisPage
             status={signalState.status}
@@ -236,6 +239,22 @@ export default function App() {
             onTriggerSync={signalState.triggerSync}
             onRunAnalysis={signalState.run}
             onSelectMatch={signalState.selectMatch}
+          />
+        </main>
+      ) : (
+        <main className="flex-1 flex flex-col">
+          <StrategyDashboard
+            syncStatus={strategyState.syncStatus}
+            strategies={strategyState.strategies}
+            result={strategyState.result}
+            selectedTradeWindow={strategyState.selectedTradeWindow}
+            loadingInit={strategyState.loadingInit}
+            runningBacktest={strategyState.runningBacktest}
+            loadingTradeWindow={strategyState.loadingTradeWindow}
+            error={strategyState.error}
+            onTriggerSync={strategyState.triggerSync}
+            onRunBacktest={strategyState.runBacktest}
+            onSelectTrade={strategyState.selectTrade}
           />
         </main>
       )}
