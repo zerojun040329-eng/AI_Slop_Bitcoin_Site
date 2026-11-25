@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { TopBar, type DashboardPageId } from './components/TopBar';
+import { AppLayout } from './components/layout/AppLayout';
+import { HomePage } from './components/home/HomePage';
 import { UnifiedDerivativesChart } from './components/UnifiedDerivativesChart';
 import { AnalyticsDetailsPanel } from './components/AnalyticsDetailsPanel';
 import { LongTermDashboardPage } from './components/longTerm/LongTermDashboardPage';
@@ -9,6 +10,11 @@ import { RealTestPage } from './components/realTest/RealTestPage';
 import { useDerivativesMarketData, useLongTermMarketData } from './hooks/useMarketData';
 import { useSignalAnalysis } from './hooks/useSignalAnalysis';
 import { useRealTest } from './hooks/useRealTest';
+import {
+  getNavConfig,
+  resolvePageFromPathname,
+  type DashboardPageId,
+} from './navigation/routes';
 import type { LayerVisibility } from './types/derivatives';
 import {
   calculateExpectedVolatilityMoves,
@@ -18,7 +24,13 @@ import {
 } from './utils/analytics';
 
 export default function App() {
-  const [activePage, setActivePage] = useState<DashboardPageId>('derivatives');
+  const [activePage, setActivePage] = useState<DashboardPageId>(() =>
+    resolvePageFromPathname(window.location.pathname),
+  );
+  const [visitedPages, setVisitedPages] = useState<Set<DashboardPageId>>(
+    () => new Set([resolvePageFromPathname(window.location.pathname)]),
+  );
+
   const [visibility, setVisibility] = useState<LayerVisibility>({
     showIV: true,
     showMaxPain: true,
@@ -29,7 +41,41 @@ export default function App() {
   const derivativesState = useDerivativesMarketData(activePage === 'derivatives');
   const longTermState = useLongTermMarketData(activePage === 'long_term');
   const signalState = useSignalAnalysis(activePage === 'signal_analysis');
-  const realTestState = useRealTest(activePage === 'strategy_backtest');
+  const realTestState = useRealTest(activePage === 'real_test');
+
+  const navigateToPage = useCallback((page: DashboardPageId) => {
+    const config = getNavConfig(page);
+    if (window.location.pathname !== config.path) {
+      window.history.pushState({ page }, '', config.path);
+    }
+    setActivePage(page);
+    setVisitedPages((prev) => {
+      if (prev.has(page)) return prev;
+      const next = new Set(prev);
+      next.add(page);
+      return next;
+    });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const targetPage = resolvePageFromPathname(window.location.pathname);
+      setActivePage(targetPage);
+      setVisitedPages((prev) => {
+        if (prev.has(targetPage)) return prev;
+        const next = new Set(prev);
+        next.add(targetPage);
+        return next;
+      });
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    document.title = getNavConfig(activePage).pageTitle;
+  }, [activePage]);
 
   const snapshot = derivativesState.data;
 
@@ -73,11 +119,23 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col">
-      <TopBar activePage={activePage} onSelectPage={setActivePage} />
+    <AppLayout activePage={activePage} onSelectPage={navigateToPage}>
+      {/* Home (Main Overview) */}
+      {visitedPages.has('home') && (
+        <main
+          className={activePage === 'home' ? 'page-enter flex-1 flex flex-col' : 'hidden'}
+          aria-hidden={activePage !== 'home'}
+        >
+          <HomePage />
+        </main>
+      )}
 
-      {activePage === 'derivatives' ? (
-        <main className="flex-1 flex flex-col">
+      {/* 1. 파생상품 분석 */}
+      {visitedPages.has('derivatives') && (
+        <main
+          className={activePage === 'derivatives' ? 'page-enter flex-1 flex flex-col' : 'hidden'}
+          aria-hidden={activePage !== 'derivatives'}
+        >
           {derivativesState.loading && !snapshot ? (
             <div className="flex-1 flex flex-col items-center justify-center px-5 py-24 text-center space-y-3">
               <RefreshCw className="h-6 w-6 text-sky-400 animate-spin" />
@@ -113,7 +171,6 @@ export default function App() {
             </div>
           ) : (
             <>
-              {/* Live API Provenance Context Strip */}
               <div className="border-b border-slate-800/80 bg-[#0A0F1A] px-5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium text-emerald-400">실제 API 연동 (Live)</span>
@@ -124,14 +181,14 @@ export default function App() {
                     수신 {snapshot.timestampIso.replace('T', ' ').slice(0, 19)} UTC
                   </span>
                 </div>
-                <div className="text-slate-500">
-                  {snapshot.description}
-                </div>
+                <div className="text-slate-500">{snapshot.description}</div>
               </div>
 
               {derivativesState.error && (
                 <div className="border-b border-rose-900/60 bg-rose-950/30 px-5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200">
-                  <span>최신 갱신 실패 ({derivativesState.error}) — 마지막 정상 수신 스냅샷을 표시 중입니다.</span>
+                  <span>
+                    최신 갱신 실패 ({derivativesState.error}) — 마지막 정상 수신 스냅샷을 표시 중입니다.
+                  </span>
                   <button
                     type="button"
                     onClick={derivativesState.refresh}
@@ -167,8 +224,14 @@ export default function App() {
             </>
           )}
         </main>
-      ) : activePage === 'long_term' ? (
-        <main className="flex-1 flex flex-col">
+      )}
+
+      {/* 2. 장기투자지표 */}
+      {visitedPages.has('long_term') && (
+        <main
+          className={activePage === 'long_term' ? 'page-enter flex-1 flex flex-col' : 'hidden'}
+          aria-hidden={activePage !== 'long_term'}
+        >
           {longTermState.loading && !longTermState.data ? (
             <div className="flex-1 flex flex-col items-center justify-center px-5 py-24 text-center space-y-3">
               <RefreshCw className="h-6 w-6 text-amber-400 animate-spin" />
@@ -187,7 +250,8 @@ export default function App() {
                   장기투자 데이터 API 연동 실패
                 </h2>
                 <p className="text-xs text-rose-300 max-w-lg font-mono-tabular">
-                  {longTermState.error ?? 'Coin Metrics 또는 Mempool.space API 응답을 수신하지 못했습니다.'}
+                  {longTermState.error ??
+                    'Coin Metrics 또는 Mempool.space API 응답을 수신하지 못했습니다.'}
                 </p>
                 <p className="text-xs text-slate-500 max-w-lg pt-1">
                   임의의 테스트 데이터로 대체하지 않습니다. 잠시 후 다시 시도해 주세요.
@@ -206,7 +270,9 @@ export default function App() {
             <>
               {longTermState.error && (
                 <div className="border-b border-rose-900/60 bg-rose-950/30 px-5 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-rose-200">
-                  <span>최신 갱신 실패 ({longTermState.error}) — 마지막 정상 수신 데이터를 표시 중입니다.</span>
+                  <span>
+                    최신 갱신 실패 ({longTermState.error}) — 마지막 정상 수신 데이터를 표시 중입니다.
+                  </span>
                   <button
                     type="button"
                     onClick={longTermState.refresh}
@@ -225,8 +291,14 @@ export default function App() {
             </>
           )}
         </main>
-      ) : activePage === 'signal_analysis' ? (
-        <main className="flex-1 flex flex-col">
+      )}
+
+      {/* 3. 시그널유사도 */}
+      {visitedPages.has('signal_analysis') && (
+        <main
+          className={activePage === 'signal_analysis' ? 'page-enter flex-1 flex flex-col' : 'hidden'}
+          aria-hidden={activePage !== 'signal_analysis'}
+        >
           <SignalAnalysisPage
             status={signalState.status}
             analysis={signalState.analysis}
@@ -241,8 +313,14 @@ export default function App() {
             onSelectMatch={signalState.selectMatch}
           />
         </main>
-      ) : (
-        <main className="flex-1 flex flex-col">
+      )}
+
+      {/* 4. 실전테스트 */}
+      {visitedPages.has('real_test') && (
+        <main
+          className={activePage === 'real_test' ? 'page-enter flex-1 flex flex-col' : 'hidden'}
+          aria-hidden={activePage !== 'real_test'}
+        >
           <RealTestPage
             inputs={realTestState.inputs}
             onChangeBudget={realTestState.setTotalBudgetUsd}
@@ -256,6 +334,6 @@ export default function App() {
           />
         </main>
       )}
-    </div>
+    </AppLayout>
   );
 }
