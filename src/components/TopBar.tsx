@@ -91,7 +91,7 @@ export const TopBar: React.FC<TopBarProps> = ({ activePage, onSelectPage }) => {
               : 'border-transparent text-slate-400 hover:text-slate-100'
           }`}
         >
-          단기 전략 테스트
+          실전테스트
         </button>
 
         <span className="hidden lg:inline-block h-3.5 w-px bg-slate-800 shrink-0" aria-hidden="true" />
@@ -179,38 +179,31 @@ export const TopBar: React.FC<TopBarProps> = ({ activePage, onSelectPage }) => {
           <>
             <button
               type="button"
-              onClick={() => scrollTo('strategy-settings')}
+              onClick={() => scrollTo('realtest-controls')}
               className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              전략 설정
+              설정·반감기
             </button>
             <button
               type="button"
-              onClick={() => scrollTo('strategy-performance')}
+              onClick={() => scrollTo('realtest-spot')}
               className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              성과 요약
+              전략 1 · 현물 DCA
             </button>
             <button
               type="button"
-              onClick={() => scrollTo('strategy-equity-drawdown')}
+              onClick={() => scrollTo('realtest-options')}
               className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              자산·MDD
+              전략 2 · 풋옵션
             </button>
             <button
               type="button"
-              onClick={() => scrollTo('strategy-breakdowns')}
+              onClick={() => scrollTo('realtest-comparison')}
               className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
-              월별·체제
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollTo('strategy-trades')}
-              className="hidden lg:inline-block hover:text-slate-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              거래 내역
+              통합 비교
             </button>
           </>
         )}

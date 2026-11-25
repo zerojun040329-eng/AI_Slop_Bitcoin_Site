@@ -5,10 +5,10 @@ import { UnifiedDerivativesChart } from './components/UnifiedDerivativesChart';
 import { AnalyticsDetailsPanel } from './components/AnalyticsDetailsPanel';
 import { LongTermDashboardPage } from './components/longTerm/LongTermDashboardPage';
 import { SignalAnalysisPage } from './components/signalAnalysis/SignalAnalysisPage';
-import { StrategyDashboard } from './components/strategyBacktest/StrategyDashboard';
+import { RealTestPage } from './components/realTest/RealTestPage';
 import { useDerivativesMarketData, useLongTermMarketData } from './hooks/useMarketData';
 import { useSignalAnalysis } from './hooks/useSignalAnalysis';
-import { useStrategyBacktest } from './hooks/useStrategyBacktest';
+import { useRealTest } from './hooks/useRealTest';
 import type { LayerVisibility } from './types/derivatives';
 import {
   calculateExpectedVolatilityMoves,
@@ -29,7 +29,7 @@ export default function App() {
   const derivativesState = useDerivativesMarketData(activePage === 'derivatives');
   const longTermState = useLongTermMarketData(activePage === 'long_term');
   const signalState = useSignalAnalysis(activePage === 'signal_analysis');
-  const strategyState = useStrategyBacktest(activePage === 'strategy_backtest');
+  const realTestState = useRealTest(activePage === 'strategy_backtest');
 
   const snapshot = derivativesState.data;
 
@@ -243,18 +243,16 @@ export default function App() {
         </main>
       ) : (
         <main className="flex-1 flex flex-col">
-          <StrategyDashboard
-            syncStatus={strategyState.syncStatus}
-            strategies={strategyState.strategies}
-            result={strategyState.result}
-            selectedTradeWindow={strategyState.selectedTradeWindow}
-            loadingInit={strategyState.loadingInit}
-            runningBacktest={strategyState.runningBacktest}
-            loadingTradeWindow={strategyState.loadingTradeWindow}
-            error={strategyState.error}
-            onTriggerSync={strategyState.triggerSync}
-            onRunBacktest={strategyState.runBacktest}
-            onSelectTrade={strategyState.selectTrade}
+          <RealTestPage
+            inputs={realTestState.inputs}
+            onChangeBudget={realTestState.setTotalBudgetUsd}
+            onChangeFee={realTestState.setFeeRatePct}
+            result={realTestState.result}
+            provenance={realTestState.provenance}
+            loading={realTestState.loading}
+            refreshing={realTestState.refreshing}
+            error={realTestState.error}
+            onRefresh={realTestState.refresh}
           />
         </main>
       )}
