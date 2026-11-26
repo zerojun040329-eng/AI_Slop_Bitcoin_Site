@@ -10,6 +10,7 @@ import { RealTestPage } from './components/realTest/RealTestPage';
 import { useDerivativesMarketData, useLongTermMarketData } from './hooks/useMarketData';
 import { useSignalAnalysis } from './hooks/useSignalAnalysis';
 import { useRealTest } from './hooks/useRealTest';
+import { useMarketNetwork } from './hooks/useMarketNetwork';
 import {
   getNavConfig,
   resolvePageFromPathname,
@@ -42,6 +43,7 @@ export default function App() {
   const longTermState = useLongTermMarketData(activePage === 'long_term');
   const signalState = useSignalAnalysis(activePage === 'signal_analysis');
   const realTestState = useRealTest(activePage === 'real_test');
+  const marketNetworkState = useMarketNetwork(activePage === 'home');
 
   const navigateToPage = useCallback((page: DashboardPageId) => {
     const config = getNavConfig(page);
@@ -126,7 +128,14 @@ export default function App() {
           className={activePage === 'home' ? 'page-enter flex-1 flex flex-col' : 'hidden'}
           aria-hidden={activePage !== 'home'}
         >
-          <HomePage />
+          <HomePage
+            overview={marketNetworkState.data}
+            loading={marketNetworkState.loading}
+            syncing={marketNetworkState.syncing}
+            error={marketNetworkState.error}
+            onRefresh={marketNetworkState.refresh}
+            onSyncNow={marketNetworkState.syncNow}
+          />
         </main>
       )}
 

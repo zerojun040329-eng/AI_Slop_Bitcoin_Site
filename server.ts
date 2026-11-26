@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { MarketDataService } from './server/services/marketDataService.ts';
 import { AnalysisController } from './src/quant/analysisController.ts';
+import { MarketNetworkService } from './server/marketNetwork/services/marketNetworkService.ts';
+import { createMarketNetworkRouter } from './server/marketNetwork/routes/marketNetworkRoutes.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -616,6 +618,29 @@ async function createServer() {
       res.status(400).json({ error: 'MATCH_DETAIL_ERROR', message });
     }
   });
+
+  // 5. Global Market Network (Independent Backend Module with Read-Only BTC Store Adapters)
+  const marketNetworkService = new MarketNetworkService({
+    getBtc5mSeries: () => marketDataService.getSeries(),
+    getBtc5mMeta: () => {
+      const s = marketDataService.getStatus();
+      return { lastUpdatedIso: s.lastUpdatedIso, hasSufficientData: s.hasSufficientData };
+    },
+    getBtcDailyHistory: async () => {
+      const res = await getCoinMetricsHistory();
+      return res.data.map((r) => ({ date: r.date, priceUsd: r.priceUsd }));
+    },
+    ensureBtc5mSync: () => marketDataService.syncData(false),
+    isBtc5mSyncing: () => {
+      const phase = marketDataService.getStatus().phase;
+      return (
+        phase === 'backfilling' ||
+        phase === 'updating_incremental' ||
+        phase === 'repairing_gaps'
+      );
+    },
+  });
+  app.use('/api/market-network', createMarketNetworkRouter(marketNetworkService));
 
   if (!IS_PROD) {
     const { createServer: createViteServer } = await import('vite');
