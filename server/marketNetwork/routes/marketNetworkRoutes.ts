@@ -1,4 +1,5 @@
 import express from 'express';
+import { isAllowedDetailAssetId } from '../detail/assetDetailService.ts';
 import { MarketNetworkService } from '../services/marketNetworkService.ts';
 
 export function createMarketNetworkRouter(service: MarketNetworkService): express.Router {
@@ -107,6 +108,29 @@ export function createMarketNetworkRouter(service: MarketNetworkService): expres
     } catch (err) {
       res.status(500).json({
         error: 'MARKET_NETWORK_STATUS_ERROR',
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  });
+
+  // 9. Lazy Stage-C Asset Detail Exploration endpoint
+  router.get('/detail/:assetId', async (req, res) => {
+    const rawId = String(req.params.assetId ?? '').trim().toUpperCase();
+    if (!isAllowedDetailAssetId(rawId)) {
+      res.status(404).json({
+        error: 'UNSUPPORTED_DETAIL_ASSET',
+        message: `지원하지 않는 상세 탐색 자산입니다: ${req.params.assetId}`,
+      });
+      return;
+    }
+
+    const forceRefresh = req.query.refresh === 'true' || req.query.refresh === '1';
+    try {
+      const payload = await service.getAssetDetail(rawId, forceRefresh);
+      res.json(payload);
+    } catch (err) {
+      res.status(502).json({
+        error: 'ASSET_DETAIL_FETCH_ERROR',
         message: err instanceof Error ? err.message : String(err),
       });
     }

@@ -23,6 +23,7 @@ export function useMarketNetwork(enabled = true): MarketNetworkHookState {
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
   const hasLoadedRef = useRef(false);
+  const lastFetchedAtRef = useRef<number>(0);
 
   const loadOverview = useCallback(async (isInitial = false) => {
     if (isInitial) setLoading(true);
@@ -32,6 +33,7 @@ export function useMarketNetwork(enabled = true): MarketNetworkHookState {
       setData(overview);
       setError(null);
       hasLoadedRef.current = true;
+      lastFetchedAtRef.current = Date.now();
     } catch (err) {
       if (!mountedRef.current) return;
       setError(err instanceof Error ? err.message : String(err));
@@ -50,6 +52,7 @@ export function useMarketNetwork(enabled = true): MarketNetworkHookState {
       if (!mountedRef.current) return;
       setData(overview);
       hasLoadedRef.current = true;
+      lastFetchedAtRef.current = Date.now();
     } catch (err) {
       if (!mountedRef.current) return;
       setError(err instanceof Error ? err.message : String(err));
@@ -75,7 +78,11 @@ export function useMarketNetwork(enabled = true): MarketNetworkHookState {
   useEffect(() => {
     if (!enabled) return;
 
-    void loadOverview(!hasLoadedRef.current);
+    const ageMs = Date.now() - lastFetchedAtRef.current;
+    if (!hasLoadedRef.current || ageMs >= POLL_INTERVAL_MS) {
+      void loadOverview(!hasLoadedRef.current);
+    }
+
     const interval = window.setInterval(() => {
       void loadOverview(false);
     }, POLL_INTERVAL_MS);

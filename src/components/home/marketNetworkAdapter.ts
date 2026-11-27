@@ -331,3 +331,71 @@ export function buildHomeMarketNetworkViewModel(
     includedStatusSummary,
   };
 }
+
+/**
+ * Provides the deterministic 7-node, 6-edge network geometry while overview API data is still loading,
+ * preserving exact layout coordinates so progressive reveal starts immediately without hiding the screen.
+ */
+export function buildPendingHomeMarketNetworkViewModel(): HomeMarketNetworkViewModel {
+  const makePendingAsset = (id: NetworkAssetId): NetworkAssetNodeData => ({
+    id,
+    name: id,
+    symbol: null,
+    instrumentType: 'unsupported',
+    providerLabel: '수신 대기',
+    latestPrice: null,
+    change1hPct: null,
+    change4hPct: null,
+    change24hPct: null,
+    storedBars: 0,
+    latestTimestampIso: null,
+    status: 'syncing',
+  });
+
+  return {
+    centerBtc: makePendingAsset('BTC'),
+    surroundingAssets: NETWORK_SURROUNDING_ASSETS.map(makePendingAsset),
+    assetEdges: NETWORK_SURROUNDING_ASSETS.map((targetId) => ({
+      targetId,
+      correlation: null,
+      sampleCount: 0,
+      correlation24h: null,
+      sampleCount24h: 0,
+      correlation30d: null,
+      sampleCount30d: 0,
+    })),
+    m2Node: {
+      id: 'M2',
+      label: 'M2 증가율',
+      seriesCode: 'M2SL',
+      providerLabel: 'FRED',
+      cadence: '1mo',
+      primaryValueText: '로딩 중',
+      secondaryValueText: 'YoY 전년 동월 대비',
+      rawLatestValue: null,
+      rawUnit: 'Billions USD (YoY %)',
+      changeValue: null,
+      changeUnit: '%',
+      pointCount: 0,
+      latestDate: null,
+      status: 'syncing',
+    },
+    dgs10Node: formatDgs10Node(undefined),
+    macroPairEdge: {
+      correlation: null,
+      sampleCount: 0,
+      cadenceLabel: '월간',
+      startDate: null,
+      endDate: null,
+    },
+    btcM2CrossEdge: {
+      correlation: null,
+      sampleCount: 0,
+      cadenceLabel: '월간 교차',
+      startDate: null,
+      endDate: null,
+    },
+    lastUpdatedIso: null,
+    includedStatusSummary: [],
+  };
+}

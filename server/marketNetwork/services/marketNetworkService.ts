@@ -1,6 +1,8 @@
 import type { CandleTypedSeries } from '../../services/candleRepository.ts';
 import type {
   AssetCorrelationMatrix,
+  AssetDetailId,
+  AssetDetailPayload,
   AssetId,
   AssetMarketSummary,
   AssetOhlcvResponse,
@@ -13,6 +15,7 @@ import type {
   NetworkOhlcvBar,
   ProviderHealthStatus,
 } from '../../../src/types/marketNetwork.ts';
+import { AssetDetailService } from '../detail/assetDetailService.ts';
 import {
   computeAssetCorrelationMatrix,
   computeAssetMomentumStats,
@@ -49,6 +52,7 @@ export class MarketNetworkService {
   private readonly storage = new MarketNetworkStorage();
   private readonly bybit = new BybitProvider();
   private readonly btcAdapters: ReadOnlyBtcAdapters;
+  private readonly detailService: AssetDetailService;
 
   private readonly nonBtcBars = new Map<AssetId, NetworkOhlcvBar[]>();
   private readonly assetSummaries = new Map<AssetId, AssetMarketSummary>();
@@ -62,6 +66,10 @@ export class MarketNetworkService {
 
   constructor(btcAdapters: ReadOnlyBtcAdapters) {
     this.btcAdapters = btcAdapters;
+    this.detailService = new AssetDetailService({
+      getAssetsSnapshot: () => this.getAssets(),
+      getMacroSnapshot: () => this.getMacro(),
+    });
     this.hydrateFromDisk();
   }
 
@@ -843,5 +851,12 @@ export class MarketNetworkService {
       macroCorrelations,
       btcMacroCross,
     };
+  }
+
+  async getAssetDetail(
+    assetId: AssetDetailId,
+    forceRefresh = false,
+  ): Promise<AssetDetailPayload> {
+    return this.detailService.getAssetDetail(assetId, forceRefresh);
   }
 }

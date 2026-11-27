@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
+import { getValueColor } from './homeTokens';
 import type {
   HomeMarketNetworkViewModel,
   NetworkNodeId,
@@ -25,21 +26,21 @@ const ASSET_DESCRIPTIONS: Record<string, string> = {
 function getAnchorPositionClass(nodeId: NetworkNodeId): string {
   switch (nodeId) {
     case 'BTC':
-      return 'md:left-[56%] md:top-4 md:right-auto md:bottom-auto md:translate-x-0';
+      return 'md:left-[63%] md:top-4 md:right-auto md:bottom-auto md:translate-x-0';
     case 'SPY':
-      return 'md:left-3 md:top-[10%] md:right-auto md:bottom-auto md:translate-x-0';
+      return 'md:left-3 md:top-[16%] md:right-auto md:bottom-auto md:translate-x-0';
     case 'QQQ':
-      return 'md:right-[12%] md:top-3 md:left-auto md:bottom-auto md:translate-x-0';
+      return 'md:right-[14%] md:top-3 md:left-auto md:bottom-auto md:translate-x-0';
     case 'XAU':
-      return 'md:left-3 md:top-[34%] md:right-auto md:bottom-auto md:translate-x-0';
+      return 'md:left-3 md:bottom-[14%] md:right-auto md:top-auto md:translate-x-0';
     case 'WTI':
-      return 'md:left-3 md:bottom-[8%] md:right-auto md:top-auto md:translate-x-0';
+      return 'md:left-[18%] md:bottom-3 md:right-auto md:top-auto md:translate-x-0';
     case 'TLT':
-      return 'md:right-[4%] md:bottom-3 md:left-auto md:top-auto md:translate-x-0';
+      return 'md:right-3 md:bottom-[14%] md:left-auto md:top-auto md:translate-x-0';
     case 'M2':
-      return 'md:right-3 md:top-[14%] md:left-auto md:bottom-auto md:translate-x-0';
+      return 'md:right-3 md:top-[16%] md:left-auto md:bottom-auto md:translate-x-0';
     case 'DGS10':
-      return 'md:right-3 md:bottom-[10%] md:left-auto md:top-auto md:translate-x-0';
+      return 'md:right-3 md:bottom-[14%] md:left-auto md:top-auto md:translate-x-0';
   }
 }
 
@@ -75,6 +76,13 @@ function interpretCorrelation(r: number | null): string {
     abs >= 0.7 ? '강한' : abs >= 0.4 ? '뚜렷한' : abs >= 0.2 ? '완만한' : '미약한';
   const dir = r >= 0 ? '양(+)의 동조화' : '음(-)의 역행';
   return `${strength} ${dir} 경향`;
+}
+
+function directionalTextColor(val: number | null | undefined): string {
+  if (val === null || val === undefined || !Number.isFinite(val)) {
+    return 'rgba(242, 245, 247, 0.48)';
+  }
+  return getValueColor(val);
 }
 
 export const NodeDetailFloatingPanel: React.FC<NodeDetailFloatingPanelProps> = ({
@@ -115,19 +123,19 @@ export const NodeDetailFloatingPanel: React.FC<NodeDetailFloatingPanelProps> = (
         duration: prefersReducedMotion ? 0 : 0.18,
         ease: [0.16, 1, 0.3, 1],
       }}
-      className={`absolute bottom-3 left-1/2 -translate-x-1/2 w-[min(92vw,292px)] ${positionClass} z-20 rounded-md border border-cyan-400/25 bg-[#070C17]/90 backdrop-blur-md p-3.5 shadow-[0_0_24px_rgba(34,211,238,0.08)] text-xs text-slate-200`}
+      className={`absolute bottom-3 left-1/2 -translate-x-1/2 w-[min(92vw,292px)] ${positionClass} z-20 rounded-md border border-[#F2F5F7]/20 bg-[#070C17]/92 backdrop-blur-md p-3.5 shadow-[0_8px_28px_rgba(5,8,17,0.75)] text-xs text-[#F2F5F7]`}
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+      <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-[#F2F5F7]/12">
         <div className="min-w-0">
-          <div className="text-[11px] text-cyan-300/90 font-medium truncate">
+          <div className="text-[11px] text-[#F2F5F7]/58 font-medium truncate">
             {isMacro
               ? `거시경제 · ${nodeId === 'M2' ? model.m2Node.seriesCode : model.dgs10Node.seriesCode}`
               : assetNode?.id === 'BTC'
                 ? '중심 자산 · BTCUSDT'
                 : `자산시장 · ${assetNode?.symbol ?? nodeId}`}
           </div>
-          <div className="text-sm font-semibold text-slate-100 mt-0.5 truncate">
+          <div className="text-sm font-semibold text-[#F2F5F7] mt-0.5 truncate">
             {nodeId === 'M2'
               ? model.m2Node.label
               : nodeId === 'DGS10'
@@ -140,7 +148,7 @@ export const NodeDetailFloatingPanel: React.FC<NodeDetailFloatingPanelProps> = (
           type="button"
           onClick={onClose}
           aria-label="상세 패널 닫기"
-          className="h-6 w-6 rounded flex items-center justify-center text-slate-400 hover:text-slate-100 hover:bg-slate-800/70 transition-colors shrink-0 cursor-pointer"
+          className="h-6 w-6 rounded flex items-center justify-center text-[#F2F5F7]/55 hover:text-[#F2F5F7] hover:bg-[#F2F5F7]/10 transition-colors shrink-0 cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-[#F2F5F7]/50"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -151,24 +159,19 @@ export const NodeDetailFloatingPanel: React.FC<NodeDetailFloatingPanelProps> = (
         nodeId === 'M2' ? (
           <div className="pt-2.5 space-y-2.5">
             <div className="flex items-baseline justify-between">
-              <span className="text-slate-400">전년 동월 대비(YoY)</span>
+              <span className="text-[#F2F5F7]/60">전년 동월 대비(YoY)</span>
               <span
-                className={`font-mono-tabular text-base font-semibold ${
-                  model.m2Node.primaryValueText === 'N/A'
-                    ? 'text-slate-400'
-                    : model.m2Node.primaryValueText.startsWith('-')
-                      ? 'text-rose-400'
-                      : 'text-emerald-400'
-                }`}
+                className="font-mono-tabular text-base font-semibold"
+                style={{ color: directionalTextColor(model.m2Node.changeValue) }}
               >
                 {model.m2Node.primaryValueText}
               </span>
             </div>
 
-            <div className="space-y-1.5 pt-2 border-t border-slate-800/60 font-mono-tabular text-[11px]">
+            <div className="space-y-1.5 pt-2 border-t border-[#F2F5F7]/10 font-mono-tabular text-[11px]">
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">최신 M2 잔액</span>
-                <span className="text-slate-200">
+                <span className="text-[#F2F5F7]/58 font-sans">최신 M2 잔액</span>
+                <span className="text-[#F2F5F7]/90">
                   {model.m2Node.rawLatestValue !== null
                     ? `${model.m2Node.rawLatestValue.toLocaleString('en-US', {
                         maximumFractionDigits: 1,
@@ -177,62 +180,60 @@ export const NodeDetailFloatingPanel: React.FC<NodeDetailFloatingPanelProps> = (
                 </span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">BTC ↔ M2 교차 r</span>
-                <span className="text-cyan-300">
+                <span className="text-[#F2F5F7]/58 font-sans">BTC ↔ M2 교차 r</span>
+                <span style={{ color: directionalTextColor(model.btcM2CrossEdge.correlation) }}>
                   {formatCorr(model.btcM2CrossEdge.correlation)} (n=
                   {model.btcM2CrossEdge.sampleCount})
                 </span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">M2 ↔ DGS10 r</span>
-                <span className="text-slate-200">
-                  {formatCorr(model.macroPairEdge.correlation)} (n=
-                  {model.macroPairEdge.sampleCount})
-                </span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">기준일 · 관측수</span>
-                <span className="text-slate-300">
+                <span className="text-[#F2F5F7]/58 font-sans">기준일 · 관측수</span>
+                <span className="text-[#F2F5F7]/75">
                   {model.m2Node.latestDate ?? 'N/A'} · {model.m2Node.pointCount}개
                 </span>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed pt-1 border-t border-slate-800/60">
+            <p className="text-[11px] text-[#F2F5F7]/58 leading-relaxed pt-1 border-t border-[#F2F5F7]/10">
               월간 통화량(M2SL)의 전년 동월 대비 증가율입니다. BTC와는 공통 월간 시계열로만 교차
               연결됩니다.
             </p>
+            <div className="text-[10px] text-[#35D6E8]/80 pt-1">
+              M2 노드를 한 번 더 클릭하면 거시경제 마인드맵으로 전환됩니다.
+            </div>
           </div>
         ) : (
           <div className="pt-2.5 space-y-2.5">
             <div className="flex items-baseline justify-between">
-              <span className="text-slate-400">10년물 국채금리</span>
-              <span className="font-mono-tabular text-base font-semibold text-slate-100">
+              <span className="text-[#F2F5F7]/60">10년물 국채금리</span>
+              <span className="font-mono-tabular text-base font-semibold text-[#F2F5F7]">
                 {model.dgs10Node.primaryValueText}
               </span>
             </div>
 
-            <div className="space-y-1.5 pt-2 border-t border-slate-800/60 font-mono-tabular text-[11px]">
+            <div className="space-y-1.5 pt-2 border-t border-[#F2F5F7]/10 font-mono-tabular text-[11px]">
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">최근 변화량</span>
-                <span className="text-slate-200">{model.dgs10Node.secondaryValueText}</span>
+                <span className="text-[#F2F5F7]/58 font-sans">최근 변화량</span>
+                <span style={{ color: directionalTextColor(model.dgs10Node.changeValue) }}>
+                  {model.dgs10Node.secondaryValueText}
+                </span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">M2 ↔ DGS10 r</span>
-                <span className="text-cyan-300">
+                <span className="text-[#F2F5F7]/58 font-sans">M2 ↔ DGS10 r</span>
+                <span style={{ color: directionalTextColor(model.macroPairEdge.correlation) }}>
                   {formatCorr(model.macroPairEdge.correlation)} (n=
                   {model.macroPairEdge.sampleCount})
                 </span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">기준일 · 관측수</span>
-                <span className="text-slate-300">
+                <span className="text-[#F2F5F7]/58 font-sans">기준일 · 관측수</span>
+                <span className="text-[#F2F5F7]/75">
                   {model.dgs10Node.latestDate ?? 'N/A'} · {model.dgs10Node.pointCount}개
                 </span>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed pt-1 border-t border-slate-800/60">
+            <p className="text-[11px] text-[#F2F5F7]/58 leading-relaxed pt-1 border-t border-[#F2F5F7]/10">
               미국 10년 만기 국채 수익률(FRED DGS10)입니다. 거시경제 내부 지표로 BTC와는 직접
               연결하지 않습니다.
             </p>
@@ -241,112 +242,91 @@ export const NodeDetailFloatingPanel: React.FC<NodeDetailFloatingPanelProps> = (
       ) : assetNode ? (
         <div className="pt-2.5 space-y-2.5">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="font-mono-tabular text-base font-semibold text-slate-100">
+            <span className="font-mono-tabular text-base font-semibold text-[#F2F5F7]">
               {assetNode.status === 'syncing' ? '로딩 중' : formatPrice(assetNode.latestPrice)}
             </span>
             <span
-              className={`font-mono-tabular text-xs font-semibold ${
-                assetNode.change24hPct === null
-                  ? 'text-slate-500'
-                  : assetNode.change24hPct >= 0
-                    ? 'text-emerald-400'
-                    : 'text-rose-400'
-              }`}
+              className="font-mono-tabular text-xs font-semibold"
+              style={{ color: directionalTextColor(assetNode.change24hPct) }}
             >
               24h {formatPct(assetNode.change24hPct)}
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-800/60 font-mono-tabular text-[11px]">
+          <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-[#F2F5F7]/10 font-mono-tabular text-[11px]">
             <div>
-              <div className="text-slate-500 font-sans">1시간</div>
-              <div
-                className={
-                  assetNode.change1hPct === null
-                    ? 'text-slate-500'
-                    : assetNode.change1hPct >= 0
-                      ? 'text-emerald-400'
-                      : 'text-rose-400'
-                }
-              >
+              <div className="text-[#F2F5F7]/55 font-sans">1시간</div>
+              <div style={{ color: directionalTextColor(assetNode.change1hPct) }}>
                 {formatPct(assetNode.change1hPct)}
               </div>
             </div>
             <div>
-              <div className="text-slate-500 font-sans">4시간</div>
-              <div
-                className={
-                  assetNode.change4hPct === null
-                    ? 'text-slate-500'
-                    : assetNode.change4hPct >= 0
-                      ? 'text-emerald-400'
-                      : 'text-rose-400'
-                }
-              >
+              <div className="text-[#F2F5F7]/55 font-sans">4시간</div>
+              <div style={{ color: directionalTextColor(assetNode.change4hPct) }}>
                 {formatPct(assetNode.change4hPct)}
               </div>
             </div>
             <div>
-              <div className="text-slate-500 font-sans">24시간</div>
-              <div
-                className={
-                  assetNode.change24hPct === null
-                    ? 'text-slate-500'
-                    : assetNode.change24hPct >= 0
-                      ? 'text-emerald-400'
-                      : 'text-rose-400'
-                }
-              >
+              <div className="text-[#F2F5F7]/55 font-sans">24시간</div>
+              <div style={{ color: directionalTextColor(assetNode.change24hPct) }}>
                 {formatPct(assetNode.change24hPct)}
               </div>
             </div>
           </div>
 
           {assetEdge ? (
-            <div className="space-y-1.5 pt-2 border-t border-slate-800/60 font-mono-tabular text-[11px]">
+            <div className="space-y-1.5 pt-2 border-t border-[#F2F5F7]/10 font-mono-tabular text-[11px]">
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">
+                <span className="text-[#F2F5F7]/58 font-sans">
                   BTC 상관 ({corrWindow === '24h' ? '24시간' : '30일'})
                 </span>
-                <span className="text-cyan-300 font-semibold">
+                <span
+                  className="font-semibold"
+                  style={{ color: directionalTextColor(assetEdge.correlation) }}
+                >
                   {formatCorr(assetEdge.correlation)} (n={assetEdge.sampleCount})
                 </span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">
+                <span className="text-[#F2F5F7]/58 font-sans">
                   {corrWindow === '24h' ? '참고 (30일)' : '참고 (24시간)'}
                 </span>
-                <span className="text-slate-300">
+                <span className="text-[#F2F5F7]/75">
                   {corrWindow === '24h'
                     ? `${formatCorr(assetEdge.correlation30d)} (n=${assetEdge.sampleCount30d})`
                     : `${formatCorr(assetEdge.correlation24h)} (n=${assetEdge.sampleCount24h})`}
                 </span>
               </div>
-              <div className="text-slate-400 font-sans">
+              <div className="text-[#F2F5F7]/65 font-sans">
                 해석: {interpretCorrelation(assetEdge.correlation)}
               </div>
             </div>
           ) : (
-            <div className="space-y-1.5 pt-2 border-t border-slate-800/60 font-mono-tabular text-[11px]">
+            <div className="space-y-1.5 pt-2 border-t border-[#F2F5F7]/10 font-mono-tabular text-[11px]">
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">BTC ↔ M2 교차 r</span>
-                <span className="text-cyan-300">
+                <span className="text-[#F2F5F7]/58 font-sans">BTC ↔ M2 교차 r</span>
+                <span style={{ color: directionalTextColor(model.btcM2CrossEdge.correlation) }}>
                   {formatCorr(model.btcM2CrossEdge.correlation)} (n=
                   {model.btcM2CrossEdge.sampleCount})
                 </span>
               </div>
               <div className="flex justify-between gap-2">
-                <span className="text-slate-400 font-sans">저장 5분봉</span>
-                <span className="text-slate-300">
+                <span className="text-[#F2F5F7]/58 font-sans">저장 5분봉</span>
+                <span className="text-[#F2F5F7]/75">
                   {assetNode.storedBars.toLocaleString('en-US')}봉
                 </span>
               </div>
             </div>
           )}
 
-          <div className="pt-1.5 border-t border-slate-800/60 space-y-1 text-[11px] text-slate-400">
+          <div className="pt-1.5 border-t border-[#F2F5F7]/10 space-y-1 text-[11px] text-[#F2F5F7]/58">
             <p className="leading-relaxed">{ASSET_DESCRIPTIONS[assetNode.id] ?? ''}</p>
-            <div className="flex justify-between gap-2 font-mono-tabular text-[10px] text-slate-500">
+            {assetNode.id !== 'BTC' && (
+              <div className="text-[10px] text-[#35D6E8]/80">
+                {assetNode.id} 노드를 한 번 더 클릭하면 상세 탐색 화면으로 전환됩니다.
+              </div>
+            )}
+            <div className="flex justify-between gap-2 font-mono-tabular text-[10px] text-[#F2F5F7]/42">
               <span>{assetNode.providerLabel}</span>
               <span>{formatUtcShort(assetNode.latestTimestampIso)}</span>
             </div>

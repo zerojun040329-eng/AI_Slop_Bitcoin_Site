@@ -97,15 +97,15 @@ export const HomeFloatingMenu: React.FC<HomeFloatingMenuProps> = ({
           type="button"
           onClick={() => handleSelectItem('home')}
           aria-label="Home으로 이동"
-          className="pointer-events-auto flex items-center gap-2 rounded-md px-1 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 cursor-pointer whitespace-nowrap shrink-0"
+          className="pointer-events-auto flex items-center gap-2 rounded-md px-1 py-1 text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-[#F2F5F7]/50 cursor-pointer whitespace-nowrap shrink-0"
         >
           <span
             aria-hidden="true"
-            className="flex h-6 w-6 items-center justify-center rounded border border-slate-700/80 bg-[#0A0F1A]/90 text-[11px] font-semibold font-mono-tabular text-sky-400"
+            className="flex h-6 w-6 items-center justify-center rounded border border-[#F2F5F7]/20 bg-[#080E1A]/90 text-[11px] font-semibold font-mono-tabular text-[#F2F5F7]"
           >
             B
           </span>
-          <span className="font-display text-sm font-semibold tracking-tight text-slate-100 whitespace-nowrap shrink-0">
+          <span className="font-display text-sm font-semibold tracking-tight text-[#F2F5F7] whitespace-nowrap shrink-0">
             BTC Desk
           </span>
         </button>
@@ -120,10 +120,10 @@ export const HomeFloatingMenu: React.FC<HomeFloatingMenuProps> = ({
             aria-haspopup="menu"
             aria-controls="home-floating-nav-menu"
             aria-label={isOpen ? '메뉴 닫기' : '메뉴 열기'}
-            className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 cursor-pointer shrink-0 ${
+            className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#F2F5F7]/50 cursor-pointer shrink-0 ${
               isOpen
-                ? 'bg-slate-800/75 text-slate-50'
-                : 'text-slate-400 hover:bg-slate-800/45 hover:text-slate-100'
+                ? 'bg-[#F2F5F7]/14 text-[#F2F5F7]'
+                : 'text-[#F2F5F7]/60 hover:bg-[#F2F5F7]/10 hover:text-[#F2F5F7]'
             }`}
           >
             <Menu className="h-[18px] w-[18px]" />
@@ -162,17 +162,17 @@ export const HomeFloatingMenu: React.FC<HomeFloatingMenuProps> = ({
                           e.preventDefault();
                           handleSelectItem(item.id);
                         }}
-                        className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${
+                        className={`group flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#F2F5F7]/50 ${
                           isActive
-                            ? 'bg-slate-800/80 text-slate-50'
-                            : 'text-slate-300 hover:bg-slate-800/55 hover:text-slate-50'
+                            ? 'bg-[#F2F5F7]/12 text-[#F2F5F7]'
+                            : 'text-[#F2F5F7]/70 hover:bg-[#F2F5F7]/8 hover:text-[#F2F5F7]'
                         }`}
                       >
                         <Icon
                           className={`h-4 w-4 shrink-0 transition-colors duration-150 ${
                             isActive
-                              ? 'text-sky-400'
-                              : 'text-slate-400 group-hover:text-slate-200'
+                              ? 'text-[#F2F5F7]'
+                              : 'text-[#F2F5F7]/55 group-hover:text-[#F2F5F7]'
                           }`}
                         />
                         <span className="whitespace-nowrap shrink-0">{item.label}</span>

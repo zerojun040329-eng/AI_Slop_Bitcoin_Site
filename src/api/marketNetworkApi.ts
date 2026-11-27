@@ -1,4 +1,6 @@
 import type {
+  AssetDetailId,
+  AssetDetailPayload,
   AssetId,
   AssetOhlcvResponse,
   MarketNetworkOverviewResponse,
@@ -8,8 +10,9 @@ async function parseJsonResponse<T>(res: Response, fallbackMessage: string): Pro
   if (!res.ok) {
     let detail = fallbackMessage;
     try {
-      const body = (await res.json()) as { error?: string };
-      if (body?.error) detail = body.error;
+      const body = (await res.json()) as { message?: string; error?: string };
+      if (body?.message) detail = body.message;
+      else if (body?.error) detail = body.error;
     } catch {
       // Ignore invalid JSON error bodies
     }
@@ -53,5 +56,24 @@ export async function fetchAssetOhlcv(assetId: AssetId, limit = 288): Promise<As
   return parseJsonResponse<AssetOhlcvResponse>(
     res,
     `${assetId} 5분봉 데이터를 불러오지 못했습니다.`,
+  );
+}
+
+export async function fetchAssetDetail(
+  assetId: AssetDetailId,
+  options?: { signal?: AbortSignal; refresh?: boolean },
+): Promise<AssetDetailPayload> {
+  const qs = options?.refresh ? '?refresh=true' : '';
+  const res = await fetch(
+    `/api/market-network/detail/${encodeURIComponent(assetId)}${qs}`,
+    {
+      method: 'GET',
+      signal: options?.signal,
+      headers: { Accept: 'application/json' },
+    },
+  );
+  return parseJsonResponse<AssetDetailPayload>(
+    res,
+    `${assetId} 상세 탐색 데이터를 불러오지 못했습니다.`,
   );
 }

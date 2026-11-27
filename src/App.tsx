@@ -125,10 +125,11 @@ export default function App() {
       {/* Home (Main Overview) */}
       {visitedPages.has('home') && (
         <main
-          className={activePage === 'home' ? 'page-enter flex-1 flex flex-col' : 'hidden'}
+          className={activePage === 'home' ? 'flex-1 flex flex-col' : 'hidden'}
           aria-hidden={activePage !== 'home'}
         >
           <HomePage
+            isActive={activePage === 'home'}
             overview={marketNetworkState.data}
             loading={marketNetworkState.loading}
             syncing={marketNetworkState.syncing}
